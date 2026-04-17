@@ -715,13 +715,14 @@ window.sendToCalendar = async () => {
   console.log('assigneeUids:', assigneeUids, 'emails:', emails);
 
   const payload = {
+    type: 'calendar',
     text: item.text,
     date: dateStr,
     time: timeStr,
     attendees: emails.join(","),
   };
 
-  const CALENDAR_WEBHOOK = 'https://hook.eu1.make.com/0qgnie3u2lf9qksvzp5snazxropmie5t';
+  const CALENDAR_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxt_Nsk4lDCvUzb7lQ-FTqfGnWss_uFYAJ4XRJ2V04myyiKr8xgW4FwjjfHqQzbHUwg/exec';
   try {
     const btn = document.getElementById('btn-cal');
     btn.textContent = '⏳ Odesílám...';
@@ -1059,9 +1060,9 @@ window.sendMyDayEmail = async () => {
       <p style="font-size:11px;color:#bbb;margin-top:20px;text-align:center;">FK Teplice · Program FK Teplice</p>
     </div>`;
 
-  const payload = { name, email, date: dateStr, htmlBody };
+  const payload = { type: "email", name, email, date: dateStr, htmlBody };
   try {
-    const WEBHOOK_URL = "https://hook.eu1.make.com/9d7ouo6apcoumiqnbyiaqxiohiqblwr2";
+    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxt_Nsk4lDCvUzb7lQ-FTqfGnWss_uFYAJ4XRJ2V04myyiKr8xgW4FwjjfHqQzbHUwg/exec";
     await fetch(WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     msg.style.display = "block";
     setTimeout(() => { msg.style.display="none"; btn.disabled=false; }, 3000);
