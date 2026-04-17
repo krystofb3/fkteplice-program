@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Program FK Teplice — FK Teplice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #0410C3; --blue-dark: #002FB9;
+  --yellow: #FEE501; --yellow-2: #FFC007;
+  --bg: #F2F1ED; --surface: #FFFFFF; --surface-2: #ECEAE4;
+  --border: rgba(0,0,0,0.09); --border-md: rgba(0,0,0,0.14);
+  --text: #111; --text-2: #555; --text-3: #999;
+  --green: #3B6D11; --green-bg: #EAF3DE;
+  --orange: #993C1D; --orange-bg: #FAECE7;
+  --r: 10px; --r-sm: 6px; --r-xs: 4px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+#auth-screen { min-height:100vh; display:flex; align-items:center; justify-content:center; background:var(--blue); }
+.auth-card { background:var(--surface); border-radius:16px; padding:2.5rem 2rem; width:340px; display:flex; flex-direction:column; gap:1.25rem; }
+.auth-logo { display:flex; align-items:center; gap:12px; margin-bottom:4px; }
+.auth-logo-circle { width:40px; height:40px; background:var(--blue); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:600; color:var(--yellow); }
+.auth-logo-title { font-size:16px; font-weight:600; color:var(--text); }
+.auth-logo-sub { font-size:12px; color:var(--text-3); }
+.auth-field { display:flex; flex-direction:column; gap:5px; }
+.auth-label { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-3); }
+.auth-input { background:var(--surface-2); border:1px solid var(--border-md); border-radius:var(--r-sm); padding:9px 12px; font-size:14px; font-family:'DM Sans',sans-serif; color:var(--text); outline:none; transition:border-color 0.15s; }
+.auth-input:focus { border-color:var(--blue); }
+.auth-btn { background:var(--blue); color:var(--yellow); border:none; border-radius:var(--r-sm); padding:10px; font-size:14px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; transition:background 0.15s; }
+.auth-btn:hover { background:var(--blue-dark); }
+.auth-error { font-size:12px; color:#A32D2D; background:#FCEBEB; border-radius:var(--r-xs); padding:8px 10px; display:none; }
+#app { display:none; min-height:100vh; flex-direction:column; }
+.topbar { background:var(--blue); height:50px; display:flex; align-items:center; justify-content:space-between; padding:0 1.25rem; position:sticky; top:0; z-index:200; }
+.tb-brand { display:flex; align-items:center; gap:10px; }
+.tb-logo { width:28px; height:28px; background:var(--yellow); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; color:var(--blue); }
+.tb-name { font-size:14px; font-weight:600; color:var(--yellow); }
+.tb-right { display:flex; align-items:center; gap:8px; }
+.tb-week-label { font-size:11px; color:rgba(254,229,1,0.65); font-family:'DM Mono',monospace; }
+.tb-nav { display:flex; gap:3px; }
+.tb-nav-btn { background:rgba(255,255,255,0.12); border:none; color:var(--yellow); width:28px; height:28px; border-radius:var(--r-xs); cursor:pointer; font-size:14px; display:flex; align-items:center; justify-content:center; transition:background 0.15s; }
+.tb-nav-btn:hover { background:rgba(255,255,255,0.22); }
+.tb-avatar { width:28px; height:28px; border-radius:50%; background:var(--yellow); display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:var(--blue); cursor:pointer; position:relative; }
+.tb-avatar-menu { position:absolute; top:36px; right:0; background:var(--surface); border:1px solid var(--border-md); border-radius:var(--r-sm); padding:6px; min-width:160px; display:none; flex-direction:column; gap:2px; z-index:300; }
+.tb-avatar-menu.open { display:flex; }
+.tb-menu-item { padding:7px 10px; font-size:13px; border-radius:var(--r-xs); cursor:pointer; color:var(--text); }
+.tb-menu-item:hover { background:var(--surface-2); }
+.tb-menu-item.danger { color:#A32D2D; }
+.app-body { display:flex; flex:1; }
+.sidebar { width:240px; flex-shrink:0; background:var(--surface); border-right:1px solid var(--border); display:flex; flex-direction:column; position:sticky; top:50px; height:calc(100vh - 50px); overflow-y:auto; }
+.sidebar-inner { padding:1rem; display:flex; flex-direction:column; gap:1.25rem; flex:1; }
+.sb-sec-title { font-size:10px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-3); margin-bottom:6px; }
+.zapas-fields { display:flex; flex-direction:column; gap:8px; }
+.zf-label { font-size:10px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-3); margin-bottom:3px; }
+.zf-input, .zf-select { background:var(--surface-2); border:1px solid var(--border-md); border-radius:var(--r-xs); padding:6px 8px; font-size:13px; font-weight:500; color:var(--text); font-family:'DM Sans',sans-serif; width:100%; outline:none; transition:border-color 0.15s; appearance:none; }
+.zf-input:focus, .zf-select:focus { border-color:var(--blue); }
+.zf-input:disabled, .zf-select:disabled { opacity:0.4; cursor:not-allowed; background:var(--bg); }
+.zf-row { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+.matchday-pill { background:var(--blue); border-radius:var(--r-sm); padding:9px 12px; display:none; }
+.matchday-pill.visible { display:block; }
+.mp-label { font-size:10px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:rgba(254,229,1,0.65); margin-bottom:3px; }
+.mp-text { font-size:12px; font-weight:600; color:var(--yellow); line-height:1.4; }
+.gen-btn { background:var(--yellow); color:var(--blue); border:none; border-radius:var(--r-sm); padding:8px 10px; font-size:12px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; width:100%; transition:opacity 0.15s; }
+.gen-btn:hover { opacity:0.85; }
+.gen-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.prog-block { display:flex; flex-direction:column; gap:8px; }
+.prog-row { display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; }
+.prog-label { color:var(--text-2); }
+.prog-num { font-weight:500; font-family:'DM Mono',monospace; }
+.pbar { height:4px; background:var(--surface-2); border-radius:2px; overflow:hidden; }
+.pbar-fill { height:100%; background:var(--blue); border-radius:2px; transition:width 0.3s; }
+.pbar-fill.yellow { background:var(--yellow-2); }
+.day-list { display:flex; flex-direction:column; gap:3px; }
+.day-item { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:var(--r-sm); cursor:pointer; border:1px solid transparent; transition:background 0.12s; }
+.day-item:hover { background:var(--surface-2); }
+.day-item.active { background:var(--blue); }
+.day-item.is-match { border-color:var(--yellow-2); }
+.day-item.active.is-match { border-color:transparent; }
+.di-name { font-size:13px; font-weight:500; color:var(--text); flex:1; }
+.day-item.active .di-name { color:var(--yellow); }
+.di-date { font-size:11px; color:var(--text-3); font-family:'DM Mono',monospace; }
+.day-item.active .di-date { color:rgba(254,229,1,0.6); }
+.di-prog { font-size:11px; color:var(--text-3); font-family:'DM Mono',monospace; min-width:28px; text-align:right; }
+.day-item.active .di-prog { color:rgba(254,229,1,0.6); }
+.di-pip { width:6px; height:6px; border-radius:50%; background:var(--yellow-2); flex-shrink:0; }
+.day-item.active .di-pip { background:var(--yellow); }
+.sb-footer { padding:1rem; border-top:1px solid var(--border); margin-top:auto; }
+.logout-btn { background:none; border:1px solid var(--border-md); border-radius:var(--r-sm); padding:6px 10px; font-size:12px; color:var(--text-3); cursor:pointer; font-family:'DM Sans',sans-serif; width:100%; transition:all 0.15s; }
+.logout-btn:hover { border-color:#A32D2D; color:#A32D2D; }
+.main-content { flex:1; padding:1.25rem 1.5rem; min-width:0; }
+.main-day-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:1rem; }
+.mdh-title { font-size:20px; font-weight:600; color:var(--text); }
+.mdh-sub { font-size:12px; color:var(--text-3); margin-top:1px; }
+.match-badge { display:none; align-items:center; gap:6px; background:var(--blue); color:var(--yellow); font-size:11px; font-weight:600; padding:4px 12px; border-radius:20px; }
+.match-badge.visible { display:flex; }
+.match-badge-dot { width:5px; height:5px; border-radius:50%; background:var(--yellow); }
+.platform-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:12px; }
+.platform-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; }
+.pc-head { display:flex; align-items:center; justify-content:space-between; padding:9px 12px; border-bottom:1px solid var(--border); }
+.pc-name { font-size:10px; font-weight:600; letter-spacing:0.07em; text-transform:uppercase; color:var(--text-3); }
+.pc-add-btn { background:none; border:none; cursor:pointer; font-size:18px; color:var(--text-3); line-height:1; padding:0 2px; transition:color 0.15s; }
+.pc-add-btn:hover { color:var(--blue); }
+.pc-add-btn:disabled { opacity:0.3; cursor:not-allowed; }
+.pc-items { padding:6px 12px 8px; display:flex; flex-direction:column; gap:1px; min-height:40px; }
+.pc-item { display:flex; align-items:flex-start; gap:6px; padding:5px 0; border-bottom:1px solid var(--border); }
+.pc-item:last-child { border-bottom:none; }
+.pc-cb { width:14px; height:14px; border:1.5px solid var(--border-md); border-radius:3px; flex-shrink:0; margin-top:1px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+.pc-cb:hover { border-color:var(--blue); }
+.pc-cb.checked { background:var(--blue); border-color:var(--blue); }
+.pc-cb.checked::after { content:'✓'; color:var(--yellow); font-size:9px; font-weight:600; }
+.pc-text { font-size:12px; color:var(--text); line-height:1.4; flex:1; }
+.pc-text.done { color:var(--text-3); text-decoration:line-through; }
+.pc-avatars { display:flex; gap:2px; flex-shrink:0; }
+.avatar-xs { width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:600; border:1.5px solid var(--surface); }
+.pc-del { background:none; border:none; cursor:pointer; color:var(--text-3); font-size:14px; line-height:1; padding:0 2px; opacity:0; transition:opacity 0.15s,color 0.15s; flex-shrink:0; }
+.pc-item:hover .pc-del { opacity:1; }
+.pc-del:hover { color:#A32D2D; }
+.pc-empty { font-size:11px; color:var(--text-3); font-style:italic; padding:4px 0; }
+.checklist-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; margin-bottom:12px; }
+.cc-head { display:flex; align-items:center; gap:8px; padding:10px 14px; cursor:pointer; border-bottom:1px solid var(--border); user-select:none; }
+.cc-dot { width:8px; height:8px; border-radius:50%; background:var(--blue); flex-shrink:0; }
+.cc-title { font-size:13px; font-weight:600; color:var(--text); flex:1; }
+.cc-count { font-size:11px; color:var(--text-3); font-family:'DM Mono',monospace; }
+.cc-arrow { font-size:11px; color:var(--text-3); transition:transform 0.2s; }
+.cc-arrow.open { transform:rotate(180deg); }
+.cc-tasks { padding:4px 14px 8px; }
+.cc-task { display:flex; align-items:flex-start; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); }
+.cc-task:last-child { border-bottom:none; }
+.cc-cb { width:15px; height:15px; border:1.5px solid var(--border-md); border-radius:3px; flex-shrink:0; margin-top:1px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+.cc-cb:hover { border-color:var(--blue); }
+.cc-cb.checked { background:var(--blue); border-color:var(--blue); }
+.cc-cb.checked::after { content:'✓'; color:var(--yellow); font-size:9px; font-weight:600; }
+.cc-body { flex:1; min-width:0; }
+.cc-text { font-size:13px; color:var(--text); line-height:1.4; }
+.cc-text.done { color:var(--text-3); text-decoration:line-through; }
+.cc-meta { display:flex; gap:4px; margin-top:4px; flex-wrap:wrap; align-items:center; }
+.tag { font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; }
+.tag-time { background:#E6F1FB; color:#0C447C; }
+.tag-prio { background:var(--yellow); color:var(--blue); }
+.tag-weekly { background:var(--green-bg); color:var(--green); }
+.tag-match { background:var(--orange-bg); color:var(--orange); }
+.cc-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+.cc-del { background:none; border:none; cursor:pointer; color:var(--text-3); font-size:15px; line-height:1; opacity:0; transition:opacity 0.15s,color 0.15s; }
+.cc-task:hover .cc-del { opacity:1; }
+.cc-del:hover { color:#A32D2D; }
+.cc-add { display:flex; align-items:center; gap:8px; padding:8px 14px; border-top:1px solid var(--border); }
+.cc-add-input { flex:1; background:none; border:none; outline:none; font-size:13px; color:var(--text-2); font-family:'DM Sans',sans-serif; }
+.cc-add-input::placeholder { color:var(--text-3); }
+.cc-add-btn { background:none; border:none; cursor:pointer; font-size:20px; color:var(--text-3); line-height:1; transition:color 0.15s; }
+.cc-add-btn:hover { color:var(--blue); }
+.cc-add-btn:disabled { opacity:0.3; cursor:not-allowed; }
+.modal-overlay { display:none; min-height:400px; background:rgba(0,0,0,0.45); align-items:center; justify-content:center; padding:1rem; position:fixed; inset:0; z-index:500; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--surface); border-radius:14px; padding:1.5rem; width:100%; max-width:420px; display:flex; flex-direction:column; gap:1rem; }
+.modal-title { font-size:16px; font-weight:600; color:var(--text); }
+.modal-field { display:flex; flex-direction:column; gap:5px; }
+.modal-label { font-size:11px; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-3); }
+.modal-input, .modal-select { background:var(--surface-2); border:1px solid var(--border-md); border-radius:var(--r-xs); padding:8px 10px; font-size:13px; font-family:'DM Sans',sans-serif; color:var(--text); outline:none; width:100%; transition:border-color 0.15s; appearance:none; }
+.modal-input:focus, .modal-select:focus { border-color:var(--blue); }
+.modal-btns { display:flex; gap:8px; justify-content:flex-end; }
+.modal-btn { padding:8px 16px; border-radius:var(--r-sm); font-size:13px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; border:none; transition:opacity 0.15s; }
+.modal-btn.primary { background:var(--blue); color:var(--yellow); }
+.modal-btn.secondary { background:var(--surface-2); color:var(--text-2); }
+.modal-btn:hover { opacity:0.85; }
+.member-checkboxes { display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto; }
+.member-cb-row { display:flex; align-items:center; gap:8px; padding:5px 8px; border-radius:var(--r-xs); cursor:pointer; }
+.member-cb-row:hover { background:var(--surface-2); }
+.member-cb-row input { width:14px; height:14px; accent-color:var(--blue); cursor:pointer; }
+.member-cb-label { font-size:13px; color:var(--text); }
+.admin-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--r); padding:1rem 1.25rem; margin-bottom:12px; }
+.admin-section-title { font-size:13px; font-weight:600; color:var(--text); margin-bottom:10px; }
+.member-list { display:flex; flex-direction:column; gap:6px; }
+.member-row { display:flex; align-items:center; gap:10px; padding:7px 10px; background:var(--surface-2); border-radius:var(--r-sm); }
+.member-avatar { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; }
+.member-info { flex:1; }
+.member-name { font-size:13px; font-weight:500; color:var(--text); }
+.member-email { font-size:11px; color:var(--text-3); }
+.member-role { font-size:10px; font-weight:600; padding:2px 7px; border-radius:20px; }
+.role-admin { background:var(--blue); color:var(--yellow); }
+.role-user { background:var(--surface-2); color:var(--text-2); border:1px solid var(--border-md); }
+.member-del { background:none; border:none; cursor:pointer; color:var(--text-3); font-size:16px; opacity:0; transition:opacity 0.15s; }
+.member-row:hover .member-del { opacity:1; }
+.member-del:hover { color:#A32D2D; }
+.legend { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:4px; }
+.leg-item { display:flex; align-items:center; gap:5px; }
+.leg-dot { width:10px; height:10px; border-radius:50%; }
+.leg-label { font-size:11px; color:var(--text-3); }
+.week-history { display:flex; gap:5px; overflow-x:auto; padding-bottom:2px; margin-bottom:1rem; scrollbar-width:none; }
+.week-history::-webkit-scrollbar { display:none; }
+.wh-tab { flex-shrink:0; padding:5px 12px; border-radius:var(--r-sm); border:1px solid var(--border-md); font-size:12px; color:var(--text-3); background:var(--surface); cursor:pointer; transition:all 0.12s; font-family:'DM Mono',monospace; }
+.wh-tab:hover { border-color:var(--blue); color:var(--blue); }
+.wh-tab.active { background:var(--blue); color:var(--yellow); border-color:var(--blue); }
+.view { display:none; }
+.view.active { display:block; }
+.empty-state { text-align:center; padding:1.5rem 1rem; color:var(--text-3); font-size:13px; }
+.myday-title { font-size:20px; font-weight:600; color:var(--text); }
+.myday-sub { font-size:13px; color:var(--text-3); margin-top:2px; margin-bottom:1rem; }
+.myday-send-btn { background:var(--blue); color:var(--yellow); border:none; border-radius:var(--r-sm); padding:8px 16px; font-size:13px; font-weight:600; font-family:'DM Sans',sans-serif; cursor:pointer; transition:opacity 0.15s; margin-top:1rem; }
+.myday-send-btn:hover { opacity:0.85; }
+.myday-send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.myday-send-msg { font-size:12px; color:var(--green); margin-top:8px; display:none; }
+.myday-list { display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--border); border-radius:var(--r); overflow:hidden; }
+.myday-item { display:flex; align-items:flex-start; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); }
+.myday-item:last-child { border-bottom:none; }
+.myday-item:hover { background:var(--surface-2); }
+.myday-cb { width:16px; height:16px; border:1.5px solid var(--border-md); border-radius:4px; flex-shrink:0; margin-top:2px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+.myday-cb:hover { border-color:var(--blue); }
+.myday-cb.checked { background:var(--blue); border-color:var(--blue); }
+.myday-cb.checked::after { content:'✓'; color:var(--yellow); font-size:10px; font-weight:600; }
+.myday-body { flex:1; }
+.myday-text { font-size:14px; color:var(--text); line-height:1.4; }
+.myday-text.done { color:var(--text-3); text-decoration:line-through; }
+.myday-meta { display:flex; gap:8px; margin-top:3px; align-items:center; }
+.myday-time { font-size:11px; color:var(--text-3); font-family:'DM Mono',monospace; }
+.myday-source { font-size:10px; font-weight:600; color:var(--text-3); letter-spacing:0.05em; text-transform:uppercase; }
+@media (max-width:768px) {
+  .sidebar { display:none; }
+  .platform-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .main-content { padding:1rem; }
+}
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="auth-logo-circle">FK</div>
+      <div><div class="auth-logo-title">Program FK Teplice</div><div class="auth-logo-sub">FK Teplice</div></div>
+    </div>
+    <div class="auth-field"><div class="auth-label">E-mail</div><input class="auth-input" type="email" id="auth-email" placeholder="vas@email.cz"></div>
+    <div class="auth-field"><div class="auth-label">Heslo</div><input class="auth-input" type="password" id="auth-pass" placeholder="••••••••"></div>
+    <div class="auth-error" id="auth-error"></div>
+    <button class="auth-btn" onclick="doLogin()">Přihlásit se</button>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="tb-brand"><div class="tb-logo">FK</div><div class="tb-name">Program FK Teplice</div></div>
+    <div class="tb-right">
+      <span class="tb-week-label" id="tb-week-label">—</span>
+      <div class="tb-nav">
+        <button class="tb-nav-btn" onclick="changeWeek(-1)">‹</button>
+        <button class="tb-nav-btn" onclick="changeWeek(1)">›</button>
+      </div>
+      <div class="tb-avatar" id="tb-avatar" onclick="toggleAvatarMenu()">
+        <span id="tb-avatar-initials">?</span>
+        <div class="tb-avatar-menu" id="tb-avatar-menu">
+          <div class="tb-menu-item" onclick="showMyDay()">Můj den</div>
+          <div class="tb-menu-item" id="menu-admin" onclick="showAdmin()" style="display:none">Správa týmu</div>
+          <div class="tb-menu-item danger" onclick="doLogout()">Odhlásit se</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-body">
+    <div class="sidebar">
+      <div class="sidebar-inner">
+        <div>
+          <div class="sb-sec-title">Zápas</div>
+          <div class="zapas-fields">
+            <div><div class="zf-label">Soupeř</div><input class="zf-input" id="zf-souper" placeholder="Soupeř..." oninput="debounceSave()"></div>
+            <div>
+              <div class="zf-label">Den zápasu</div>
+              <select class="zf-select" id="zf-matchday" onchange="onMatchdayChange()">
+                <option value="-1">— bez zápasu —</option>
+                <option value="0">Pondělí</option><option value="1">Úterý</option><option value="2">Středa</option>
+                <option value="3">Čtvrtek</option><option value="4">Pátek</option><option value="5">Sobota</option><option value="6">Neděle</option>
+              </select>
+            </div>
+            <div class="zf-row">
+              <div><div class="zf-label">Výkop</div><input class="zf-input" id="zf-cas" placeholder="10:30" oninput="debounceSave()"></div>
+              <div><div class="zf-label">Místo</div>
+                <select class="zf-select" id="zf-venue" onchange="onMatchdayChange()">
+                  <option value="home">Domácí</option><option value="away">Venkovní</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="matchday-pill" id="matchday-pill"><div class="mp-label">Zápasový den</div><div class="mp-text" id="mp-text">—</div></div>
+        <button class="gen-btn" id="gen-btn" onclick="generateWeek()">↻ Generovat týden ze šablon</button>
+        <div>
+          <div class="sb-sec-title">Pokrok</div>
+          <div class="prog-block">
+            <div><div class="prog-row"><span class="prog-label">Týden celkem</span><span class="prog-num" id="prog-week-txt">0 / 0</span></div><div class="pbar"><div class="pbar-fill" id="prog-week-bar" style="width:0%"></div></div></div>
+            <div style="margin-top:6px"><div class="prog-row"><span class="prog-label">Dnes</span><span class="prog-num" id="prog-day-txt">0 / 0</span></div><div class="pbar"><div class="pbar-fill yellow" id="prog-day-bar" style="width:0%"></div></div></div>
+          </div>
+        </div>
+        <div><div class="sb-sec-title">Dny v týdnu</div><div class="day-list" id="day-list"></div></div>
+      </div>
+      <div class="sb-footer"><button class="logout-btn" onclick="doLogout()">Odhlásit se</button></div>
+    </div>
+
+    <div class="main-content">
+      <div class="view active" id="view-main">
+        <div class="week-history" id="week-history"></div>
+        <div class="main-day-header">
+          <div><div class="mdh-title" id="mdh-title">—</div><div class="mdh-sub" id="mdh-sub"></div></div>
+          <div class="match-badge" id="match-badge"><div class="match-badge-dot"></div><span>Zápasový den</span></div>
+        </div>
+        <div class="platform-grid" id="platform-grid"></div>
+        <div class="checklist-card">
+          <div class="cc-head" onclick="toggleChecklist()">
+            <div class="cc-dot"></div><div class="cc-title">Příprava a úkoly</div>
+            <div class="cc-count" id="cc-count">0/0</div><div class="cc-arrow open" id="cc-arrow">▾</div>
+          </div>
+          <div id="cc-body">
+            <div class="cc-tasks" id="cc-tasks"></div>
+            <div class="cc-add"><input class="cc-add-input" id="cc-add-input" placeholder="Přidat úkol..."><button class="cc-add-btn" id="cc-add-btn" onclick="addChecklistItem()">+</button></div>
+          </div>
+        </div>
+        <div class="legend" id="legend"></div>
+      </div>
+
+      <div class="view" id="view-admin">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
+          <button onclick="showMain()" style="background:none;border:1px solid var(--border-md);border-radius:var(--r-sm);padding:5px 12px;font-size:13px;color:var(--text-2);cursor:pointer;font-family:'DM Sans',sans-serif;">← zpět</button>
+          <div style="font-size:18px;font-weight:600;">Správa týmu</div>
+        </div>
+        <div class="admin-section">
+          <div class="admin-section-title">Členové týmu</div>
+          <div class="member-list" id="member-list"></div>
+        </div>
+        <div class="admin-section">
+          <div class="admin-section-title">Přidat člena</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+              <div><div class="modal-label" style="margin-bottom:4px;">Jméno</div><input class="modal-input" id="new-member-name" placeholder="Jan Novák"></div>
+              <div><div class="modal-label" style="margin-bottom:4px;">Barva</div>
+                <select class="modal-select" id="new-member-color">
+                  <option value="blue">Modrá</option><option value="green">Zelená</option><option value="pink">Růžová</option><option value="teal">Tyrkysová</option><option value="orange">Oranžová</option>
+                </select>
+              </div>
+            </div>
+            <div><div class="modal-label" style="margin-bottom:4px;">E-mail</div><input class="modal-input" id="new-member-email" placeholder="jan@fkteplice.cz" type="email"></div>
+            <div><div class="modal-label" style="margin-bottom:4px;">Heslo</div><input class="modal-input" id="new-member-pass" placeholder="dočasné heslo" type="password"></div>
+            <div><div class="modal-label" style="margin-bottom:4px;">Role</div>
+              <select class="modal-select" id="new-member-role"><option value="user">Uživatel</option><option value="admin">Admin</option></select>
+            </div>
+            <button class="modal-btn primary" onclick="addMember()" style="align-self:flex-start;margin-top:4px;">Přidat člena</button>
+            <div id="add-member-msg" style="font-size:12px;display:none;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="view" id="view-myday">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
+          <button onclick="showMain()" style="background:none;border:1px solid var(--border-md);border-radius:var(--r-sm);padding:5px 12px;font-size:13px;color:var(--text-2);cursor:pointer;font-family:'DM Sans',sans-serif;">← zpět</button>
+          <div><div class="myday-title">Můj den</div><div class="myday-sub" id="myday-sub"></div></div>
+        </div>
+        <div class="myday-list" id="myday-list"></div>
+        <div style="margin-top:1rem;display:flex;align-items:center;gap:12px;">
+          <button class="myday-send-btn" id="myday-send-btn" onclick="sendMyDayEmail()">Poslat na email</button>
+          <div class="myday-send-msg" id="myday-send-msg">Email odeslán!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-content">
+  <div class="modal">
+    <div class="modal-title" id="modal-content-title">Přidat obsah</div>
+    <div class="modal-field"><div class="modal-label">Popis</div><input class="modal-input" id="mc-text" placeholder="Co se publikuje..."></div>
+    <div class="modal-field"><div class="modal-label">Přiřadit lidem</div><div class="member-checkboxes" id="mc-members"></div></div>
+    <div class="modal-btns">
+      <button class="modal-btn secondary" onclick="closeModal('modal-content')">Zrušit</button>
+      <button class="modal-btn primary" onclick="saveContentItem()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-edit">
+  <div class="modal">
+    <div class="modal-title" id="modal-edit-title">Upravit</div>
+    <div class="modal-field"><div class="modal-label">Text</div><input class="modal-input" id="me-text" placeholder="Popis..."></div>
+    <div class="modal-field"><div class="modal-label">Čas</div><input class="modal-input" id="me-time" placeholder="např. 10:00 nebo dopoledne"></div>
+    <div class="modal-field"><div class="modal-label">Přiřadit lidem</div><div class="member-checkboxes" id="me-members"></div></div>
+    <div class="modal-btns" style="flex-wrap:wrap;gap:8px;">
+      <button class="modal-btn secondary" onclick="closeModal('modal-edit')">Zrušit</button>
+      <button class="modal-btn secondary" id="btn-cal" onclick="sendToCalendar()" style="background:#EAF3DE;color:#27500A;border:none;">📅 Přidat do kalendáře</button>
+      <button class="modal-btn primary" onclick="saveEditItem()">Uložit</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getDatabase, ref, set, get, onValue, push, remove, update, off } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDM7oygfbDOocSx5lVUW6366WtOlnWwkP4",
+  authDomain: "fk-teplice-content-plan.firebaseapp.com",
+  databaseURL: "https://fk-teplice-content-plan-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "fk-teplice-content-plan",
+  storageBucket: "fk-teplice-content-plan.firebasestorage.app",
+  messagingSenderId: "426923472867",
+  appId: "1:426923472867:web:7a4edbf4739a13a9f752d6"
+};
+
+// FIX 1: second app instance — přidávání členů nepřepíše session admina
+const mainApp = initializeApp(firebaseConfig);
+const secondApp = initializeApp(firebaseConfig, 'secondary');
+const auth = getAuth(mainApp);
+const secondAuth = getAuth(secondApp);
+const db = getDatabase(mainApp);
+
+let currentUser = null;
+let currentUserData = null;
+let weekOffset = 0;
+// FIX 4: výchozí den = dnešní den v týdnu (ne hardcoded pondělí)
+let activeDay = (() => { const d = new Date().getDay(); return d === 0 ? 6 : d - 1; })();
+let matchInfo = { souper:'', matchday:-1, cas:'', venue:'home' };
+let contentItems = {};
+let checklistItems = {};
+let members = {};
+let checklistOpen = true;
+let _pendingPlatform = null;
+let _saveDebounce = null;
+// FIX 2: sledujeme aktivní listenery pro cleanup při změně týdne
+let _weekRefs = [];
+
+const PLATFORMS = ['Content','Web / CRM','Akce a fanoušci','Partneři'];
+const PLATFORM_KEYS = ['content','webcrm','akce','partneri'];
+const DAY_FULL = ['Pondělí','Úterý','Středa','Čtvrtek','Pátek','Sobota','Neděle'];
+const COLORS = {
+  blue:   {bg:'#E6F1FB',text:'#0C447C'},
+  green:  {bg:'#EAF3DE',text:'#27500A'},
+  pink:   {bg:'#FBEAF0',text:'#72243E'},
+  teal:   {bg:'#E1F5EE',text:'#085041'},
+  orange: {bg:'#FAECE7',text:'#712B13'},
+};
+
+const WEEKLY_TEMPLATES = [
+  {day:0,text:'Plán obsahu na celý týden',time:'ráno',prio:true},
+  {day:0,text:'Domluva fotografa/kamermana na zápas',prio:true},
+  {day:2,text:'Týden na Stínadlech — natáčení',time:'8:30'},
+  {day:6,text:'Sběr dat a quick recap týdne',time:'dopoledne'},
+  {day:6,text:'Poznámky do playbooku na příští týden',time:'odpoledne'},
+];
+const MATCH_TEMPLATES = [
+  {offset:-5,text:'Pre-match serie: soupeř, statistiky, zajímavosti',prio:true},
+  {offset:-4,text:'Grafika preview zápasu',time:'dopoledne'},
+  {offset:-4,text:'Copywriting k preview postům',time:'odpoledne'},
+  {offset:-3,text:'Publikace preview posty (Content)',time:'10:00'},
+  {offset:-3,text:'Příprava matchday scénáře',time:'odpoledne'},
+  {offset:-2,text:'Grafika na sestavu / starting XI',time:'dopoledne'},
+  {offset:-2,text:'Finalizace textů pro matchday posty',time:'odpoledne'},
+  {offset:-1,text:'Grafika countdown (1 den do zápasu)',time:'ráno'},
+  {offset:-1,text:'Příprava post-match šablon (výhra / remíza / prohra)',time:'odpoledne'},
+  {offset:0, text:'Publikace starting XI',time:'1h před zápasem',prio:true},
+  {offset:0, text:'Live stories ze šatny / rozcvičky',time:'před zápasem',prio:true},
+  {offset:0, text:'Post-match výsledkový post',time:'po zápase',prio:true},
+  {offset:0, text:'Grafika výsledku (výsledkový card)',time:'hned po'},
+  {offset:1, text:'Post-match dlouhý post + highlight video',time:'11:00'},
+  {offset:1, text:'Analytika: dosah a engagement zápasového dne',time:'odpoledne'},
+];
+
+// AUTH
+window.doLogin = async () => {
+  const email = document.getElementById('auth-email').value;
+  const pass = document.getElementById('auth-pass').value;
+  const err = document.getElementById('auth-error');
+  err.style.display = 'none';
+  try { await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e) { err.textContent = 'Neplatný e-mail nebo heslo.'; err.style.display = 'block'; }
+};
+document.getElementById('auth-pass').addEventListener('keydown', e => { if(e.key==='Enter') window.doLogin(); });
+window.doLogout = () => signOut(auth);
+
+onAuthStateChanged(auth, async user => {
+  if (user) {
+    currentUser = user;
+    const snap = await get(ref(db, `users/${user.uid}`));
+    currentUserData = snap.val() || {name:user.email,role:'user',color:'blue',initials:'?'};
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    updateAvatarUI();
+    setAdminMode(currentUserData.role === 'admin');
+    initApp();
+  } else {
+    currentUser = null; currentUserData = null;
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+function updateAvatarUI() {
+  document.getElementById('tb-avatar-initials').textContent = currentUserData?.initials || '?';
+  document.getElementById('menu-admin').style.display = currentUserData?.role==='admin' ? 'block' : 'none';
+}
+
+function setAdminMode(isAdmin) {
+  document.getElementById('gen-btn').disabled = !isAdmin;
+  document.getElementById('cc-add-btn').disabled = !isAdmin;
+  document.querySelectorAll('.zf-input,.zf-select').forEach(el => el.disabled = !isAdmin);
+}
+
+// WEEK HELPERS
+// FIX 4: base datum z reálného dnešního data, ne hardcoded
+function getMondayOfWeek() {
+  const now = new Date();
+  const diff = now.getDay()===0 ? -6 : 1-now.getDay();
+  const mon = new Date(now);
+  mon.setDate(now.getDate()+diff);
+  mon.setHours(0,0,0,0);
+  mon.setDate(mon.getDate() + weekOffset*7);
+  return mon;
+}
+function getWeekDates() {
+  const mon = getMondayOfWeek();
+  return Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; });
+}
+function getWeekKey() {
+  const d = getMondayOfWeek();
+  return `${d.getFullYear()}-W${String(getWeekNum(d)).padStart(2,'0')}`;
+}
+function getWeekNum(d) {
+  const date = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+  date.setUTCDate(date.getUTCDate()+4-(date.getUTCDay()||7));
+  const y = new Date(Date.UTC(date.getUTCFullYear(),0,1));
+  return Math.ceil(((date-y)/86400000+1)/7);
+}
+function fmt(d) { return d.getDate()+'. '+(d.getMonth()+1)+'.'; }
+function fmtFull(d) { return d.getDate()+'. '+d.toLocaleDateString('cs-CZ',{month:'long'})+' '+d.getFullYear(); }
+window.changeWeek = dir => { weekOffset += dir; loadWeekData(); };
+
+// INIT
+function initApp() { listenMembers(); loadWeekData(); }
+
+function listenMembers() {
+  onValue(ref(db,'members'), snap => {
+    members = snap.val() || {};
+    if (currentUser) {
+      get(ref(db,`users/${currentUser.uid}`)).then(s => {
+        if (s.val()) { currentUserData=s.val(); updateAvatarUI(); setAdminMode(currentUserData.role==='admin'); }
+        renderAll();
+      });
+    } else renderAll();
+  });
+}
+
+// FIX 2: cleanup starých listenerů před připojením nových
+function loadWeekData() {
+  _weekRefs.forEach(r => off(r));
+  _weekRefs = [];
+  const wk = getWeekKey();
+
+  const mRef = ref(db,`weeks/${wk}/matchInfo`);
+  onValue(mRef, snap => { matchInfo = snap.val()||{souper:'',matchday:-1,cas:'',venue:'home'}; syncMatchInputs(); renderAll(); });
+  _weekRefs.push(mRef);
+
+  const cRef = ref(db,`weeks/${wk}/content`);
+  onValue(cRef, snap => { contentItems = snap.val()||{}; renderAll(); });
+  _weekRefs.push(cRef);
+
+  const chRef = ref(db,`weeks/${wk}/checklist`);
+  onValue(chRef, snap => { checklistItems = snap.val()||{}; renderAll(); });
+  _weekRefs.push(chRef);
+
+  renderWeekHistory();
+}
+
+// MATCH INFO
+function syncMatchInputs() {
+  document.getElementById('zf-souper').value = matchInfo.souper||'';
+  document.getElementById('zf-matchday').value = matchInfo.matchday??-1;
+  document.getElementById('zf-cas').value = matchInfo.cas||'';
+  document.getElementById('zf-venue').value = matchInfo.venue||'home';
+}
+
+// FIX 6: debounce — nezahlcujeme Firebase při každém stisku klávesy
+window.debounceSave = () => {
+  clearTimeout(_saveDebounce);
+  _saveDebounce = setTimeout(() => {
+    if (currentUserData?.role!=='admin') return;
+    matchInfo.souper = document.getElementById('zf-souper').value;
+    matchInfo.cas = document.getElementById('zf-cas').value;
+    set(ref(db,`weeks/${getWeekKey()}/matchInfo`), matchInfo);
+  }, 600);
+};
+
+window.onMatchdayChange = () => {
+  if (currentUserData?.role!=='admin') return;
+  matchInfo.matchday = parseInt(document.getElementById('zf-matchday').value);
+  matchInfo.venue = document.getElementById('zf-venue').value;
+  set(ref(db,`weeks/${getWeekKey()}/matchInfo`), matchInfo);
+  renderAll();
+};
+
+// GENERATE
+window.generateWeek = async () => {
+  if (currentUserData?.role!=='admin') return;
+  if (!confirm('Generovat týden ze šablon? Přidají se pouze nové šablonové úkoly.')) return;
+  const wk = getWeekKey();
+  const md = matchInfo.matchday;
+  for (const t of WEEKLY_TEMPLATES) {
+    await push(ref(db,`weeks/${wk}/checklist`), {day:t.day,text:t.text,time:t.time||'',prio:t.prio||false,type:'weekly',done:false,assignees:{}});
+  }
+  if (md>=0) {
+    for (const t of MATCH_TEMPLATES) {
+      const day = Math.max(0,Math.min(6,md+t.offset));
+      await push(ref(db,`weeks/${wk}/checklist`), {day,text:t.text,time:t.time||'',prio:t.prio||false,type:'match',offset:t.offset,done:false,assignees:{}});
+    }
+  }
+};
+
+// CONTENT
+window.openAddContent = key => {
+  if (currentUserData?.role!=='admin') return;
+  _pendingPlatform = key;
+  document.getElementById('mc-text').value = '';
+  document.getElementById('modal-content-title').textContent = `Přidat obsah — ${PLATFORMS[PLATFORM_KEYS.indexOf(key)]}`;
+  renderMemberCheckboxes('mc-members',[]);
+  openModal('modal-content');
+};
+window.saveContentItem = async () => {
+  const text = document.getElementById('mc-text').value.trim();
+  if (!text) return;
+  await push(ref(db,`weeks/${getWeekKey()}/content`), {platform:_pendingPlatform,day:activeDay,text,assignees:getCheckedMembers('mc-members'),done:false});
+  closeModal('modal-content');
+};
+window.toggleContentDone = async (id, current) => {
+  if (currentUserData?.role!=='admin' && !isAssigned(contentItems[id])) return;
+  await update(ref(db,`weeks/${getWeekKey()}/content/${id}`), {done:!current});
+};
+window.deleteContent = async id => {
+  if (currentUserData?.role!=='admin') return;
+  await remove(ref(db,`weeks/${getWeekKey()}/content/${id}`));
+};
+
+// CHECKLIST
+window.addChecklistItem = async () => {
+  if (currentUserData?.role!=='admin') return;
+  const input = document.getElementById('cc-add-input');
+  const text = input.value.trim();
+  if (!text) return;
+  await push(ref(db,`weeks/${getWeekKey()}/checklist`), {day:activeDay,text,done:false,type:'regular',assignees:{}});
+  input.value = '';
+};
+document.getElementById('cc-add-input').addEventListener('keydown', e => { if(e.key==='Enter') window.addChecklistItem(); });
+window.toggleChecklistDone = async (id, current) => {
+  if (currentUserData?.role!=='admin' && !isAssigned(checklistItems[id])) return;
+  await update(ref(db,`weeks/${getWeekKey()}/checklist/${id}`), {done:!current});
+};
+window.deleteChecklist = async id => {
+  if (currentUserData?.role!=='admin') return;
+  await remove(ref(db,`weeks/${getWeekKey()}/checklist/${id}`));
+};
+
+// EDIT ITEM
+let _editId = null;
+let _editType = null;
+
+window.openEditItem = (id, type) => {
+  if (currentUserData?.role !== 'admin') return;
+  _editId = id;
+  _editType = type;
+  const item = type === 'content' ? contentItems[id] : checklistItems[id];
+  if (!item) return;
+  document.getElementById('modal-edit-title').textContent = type === 'content' ? 'Upravit obsah' : 'Upravit úkol';
+  document.getElementById('me-text').value = item.text || '';
+  document.getElementById('me-time').value = item.time || '';
+  const selectedUids = item.assignees ? Object.values(item.assignees) : [];
+  renderMemberCheckboxes('me-members', selectedUids);
+  openModal('modal-edit');
+};
+
+window.saveEditItem = async () => {
+  if (!_editId || !_editType) return;
+  const text = document.getElementById('me-text').value.trim();
+  if (!text) return;
+  const time = document.getElementById('me-time').value.trim();
+  const assignees = getCheckedMembers('me-members');
+  const path = _editType === 'content'
+    ? `weeks/${getWeekKey()}/content/${_editId}`
+    : `weeks/${getWeekKey()}/checklist/${_editId}`;
+  await update(ref(db, path), { text, time, assignees });
+  closeModal('modal-edit');
+  _editId = null; _editType = null;
+};
+window.sendToCalendar = async () => {
+  if (!_editId || !_editType) return;
+  const item = _editType === 'content' ? contentItems[_editId] : checklistItems[_editId];
+  if (!item) return;
+
+  // Get date for current activeDay
+  const dates = getWeekDates();
+  const d = dates[activeDay];
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  const dateStr = `${yyyy}-${mm}-${dd}`;
+
+  // Parse time — must be HH:MM format for Google Calendar
+  let timeStr = '09:00';
+  if (item.time) {
+    const match = item.time.match(/^(\d{1,2}):(\d{2})$/);
+    if (match) timeStr = `${String(parseInt(match[1])).padStart(2,'0')}:${match[2]}`;
+  }
+
+  // Get attendee emails — read directly from modal checkboxes (always up to date)
+  const checkedUids = Array.from(document.querySelectorAll('#me-members input:checked')).map(cb => cb.value);
+  // Also check item.assignees from Firebase as fallback
+  const assigneeUids = checkedUids.length > 0 ? checkedUids : (item.assignees ? Object.values(item.assignees) : []);
+  const emails = assigneeUids.map(uid => {
+    const m = Object.values(members).find(x => x.uid === uid);
+    return m?.email || '';
+  }).filter(Boolean);
+  console.log('assigneeUids:', assigneeUids, 'emails:', emails);
+
+  const payload = {
+    text: item.text,
+    date: dateStr,
+    time: timeStr,
+    attendees: emails.join(","),
+  };
+
+  const CALENDAR_WEBHOOK = 'https://hook.eu1.make.com/0qgnie3u2lf9qksvzp5snazxropmie5t';
+  try {
+    const btn = document.getElementById('btn-cal');
+    btn.textContent = '⏳ Odesílám...';
+    btn.disabled = true;
+    await fetch(CALENDAR_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    btn.textContent = '✓ Přidáno!';
+    setTimeout(() => { btn.textContent = '📅 Přidat do kalendáře'; btn.disabled = false; }, 2500);
+  } catch(e) {
+    alert('Chyba při odesílání. Zkontroluj webhook URL.');
+    document.getElementById('btn-cal').textContent = '📅 Přidat do kalendáře';
+    document.getElementById('btn-cal').disabled = false;
+  }
+};
+
+function isAssigned(item) {
+  if (!item?.assignees) return false;
+  return Object.values(item.assignees).includes(currentUser.uid);
+}
+
+// MEMBERS
+// FIX 1: secondary auth instance — admin session se nepřepíše
+window.addMember = async () => {
+  if (currentUserData?.role!=='admin') return;
+  const name = document.getElementById('new-member-name').value.trim();
+  const email = document.getElementById('new-member-email').value.trim();
+  const pass = document.getElementById('new-member-pass').value.trim();
+  const role = document.getElementById('new-member-role').value;
+  const color = document.getElementById('new-member-color').value;
+  const msg = document.getElementById('add-member-msg');
+  if (!name||!email||!pass) { msg.style.cssText='display:block;color:#A32D2D;font-size:12px;'; msg.textContent='Vyplň všechna pole.'; return; }
+  try {
+    const cred = await createUserWithEmailAndPassword(secondAuth, email, pass);
+    await signOut(secondAuth);
+    const initials = name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    await set(ref(db,`users/${cred.user.uid}`), {name,email,role,color,initials});
+    await push(ref(db,'members'), {uid:cred.user.uid,name,email,role,color,initials});
+    msg.style.cssText='display:block;color:var(--green);font-size:12px;';
+    msg.textContent=`${name} byl/a přidán/a.`;
+    document.getElementById('new-member-name').value='';
+    document.getElementById('new-member-email').value='';
+    document.getElementById('new-member-pass').value='';
+  } catch(e) {
+    msg.style.cssText='display:block;color:#A32D2D;font-size:12px;';
+    msg.textContent='Chyba: '+e.message;
+  }
+};
+window.deleteMember = async key => {
+  if (currentUserData?.role!=='admin') return;
+  if (!confirm('Odebrat člena?')) return;
+  await remove(ref(db,`members/${key}`));
+};
+
+// MODALS
+window.openModal = id => document.getElementById(id).classList.add('open');
+window.closeModal = id => document.getElementById(id).classList.remove('open');
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if(e.target===el) el.classList.remove('open'); });
+});
+function renderMemberCheckboxes(containerId, selectedUids) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  Object.entries(members).forEach(([,m]) => {
+    const c = COLORS[m.color]||COLORS.blue;
+    el.innerHTML += `<label class="member-cb-row"><input type="checkbox" value="${m.uid}" ${selectedUids.includes(m.uid)?'checked':''}><div class="avatar-xs" style="background:${c.bg};color:${c.text};">${m.initials}</div><span class="member-cb-label">${m.name}</span></label>`;
+  });
+}
+function getCheckedMembers(containerId) {
+  const result = {};
+  document.getElementById(containerId).querySelectorAll('input:checked').forEach(cb => { result[cb.value]=cb.value; });
+  return result;
+}
+
+// VIEWS
+window.showAdmin = () => {
+  document.getElementById('view-main').classList.remove('active');
+  document.getElementById('view-admin').classList.add('active');
+  renderAdminMembers();
+  document.getElementById('tb-avatar-menu').classList.remove('open');
+};
+window.showMyDay = () => {
+  document.getElementById('view-main').classList.remove('active');
+  document.getElementById('view-admin').classList.remove('active');
+  document.getElementById('view-myday').classList.add('active');
+  document.getElementById('tb-avatar-menu').classList.remove('open');
+  renderMyDay();
+};
+window.showMain = () => {
+  document.getElementById('view-admin').classList.remove('active');
+  document.getElementById('view-main').classList.add('active');
+  document.getElementById('view-myday').classList.remove('active');
+};
+window.toggleAvatarMenu = () => document.getElementById('tb-avatar-menu').classList.toggle('open');
+document.addEventListener('click', e => {
+  if (!document.getElementById('tb-avatar').contains(e.target)) document.getElementById('tb-avatar-menu').classList.remove('open');
+});
+window.toggleChecklist = () => {
+  checklistOpen = !checklistOpen;
+  document.getElementById('cc-body').style.display = checklistOpen ? 'block' : 'none';
+  document.getElementById('cc-arrow').className = 'cc-arrow'+(checklistOpen?' open':'');
+};
+
+// FIX 5: week history nemodifikuje weekOffset globálně
+function renderWeekHistory() {
+  const el = document.getElementById('week-history');
+  el.innerHTML = '';
+  for (let i=-4; i<=1; i++) {
+    const delta = i;
+    const prevOffset = weekOffset;
+    weekOffset = prevOffset + delta;
+    const dates = getWeekDates();
+    const wn = getWeekNum(dates[0]);
+    const label = `T${wn} · ${fmt(dates[0])}`;
+    weekOffset = prevOffset;
+    const div = document.createElement('div');
+    div.className = 'wh-tab'+(i===0?' active':'');
+    div.textContent = label;
+    div.onclick = () => { weekOffset += delta; loadWeekData(); };
+    el.appendChild(div);
+  }
+}
+
+// RENDER
+function renderAll() {
+  const dates = getWeekDates();
+  const wn = getWeekNum(dates[0]);
+  document.getElementById('tb-week-label').textContent = `T${wn} · ${fmt(dates[0])}–${fmt(dates[6])}`;
+  renderMatchdayPill(); renderProgress(); renderDayList(dates); renderMainDay(dates); renderAdminMembers(); renderLegend();
+  if (document.getElementById("view-myday").classList.contains("active")) renderMyDay();
+}
+
+function renderMatchdayPill() {
+  const md = matchInfo.matchday;
+  const pill = document.getElementById('matchday-pill');
+  if (md<0||md!==activeDay) { pill.classList.remove('visible'); return; }
+  pill.classList.add('visible');
+  document.getElementById('mp-text').textContent = `FK Teplice vs. ${matchInfo.souper||'?'} · ${matchInfo.cas||'?'} · ${matchInfo.venue==='home'?'Stínadla':'Venkovní'}`;
+}
+
+function renderProgress() {
+  const all = [...Object.values(contentItems),...Object.values(checklistItems)];
+  const done = all.filter(i=>i.done).length;
+  const today = all.filter(i=>i.day===activeDay);
+  const todayDone = today.filter(i=>i.done).length;
+  document.getElementById('prog-week-txt').textContent = `${done} / ${all.length}`;
+  document.getElementById('prog-week-bar').style.width = all.length>0?Math.round(done/all.length*100)+'%':'0%';
+  document.getElementById('prog-day-txt').textContent = `${todayDone} / ${today.length}`;
+  document.getElementById('prog-day-bar').style.width = today.length>0?Math.round(todayDone/today.length*100)+'%':'0%';
+}
+
+function renderDayList(dates) {
+  const md = matchInfo.matchday;
+  const el = document.getElementById('day-list');
+  el.innerHTML = '';
+  DAY_FULL.forEach((name,i) => {
+    const all = [...Object.values(contentItems).filter(x=>x.day===i),...Object.values(checklistItems).filter(x=>x.day===i)];
+    const done = all.filter(x=>x.done).length;
+    const div = document.createElement('div');
+    div.className = 'day-item'+(i===activeDay?' active':'')+(i===md?' is-match':'');
+    div.innerHTML = `${i===md?'<div class="di-pip"></div>':''}<div class="di-name">${name}</div><div class="di-date">${fmt(dates[i])}</div><div class="di-prog">${done}/${all.length}</div>`;
+    div.onclick = () => { activeDay=i; renderAll(); };
+    el.appendChild(div);
+  });
+}
+
+function renderMainDay(dates) {
+  document.getElementById('mdh-title').textContent = DAY_FULL[activeDay];
+  document.getElementById('mdh-sub').textContent = fmtFull(dates[activeDay]);
+  const mb = document.getElementById('match-badge');
+  (activeDay===matchInfo.matchday&&matchInfo.matchday>=0)?mb.classList.add('visible'):mb.classList.remove('visible');
+  renderPlatformGrid(); renderChecklist();
+}
+
+function renderPlatformGrid() {
+  const isAdmin = currentUserData?.role==='admin';
+  const el = document.getElementById('platform-grid');
+  el.innerHTML = '';
+  PLATFORM_KEYS.forEach((key,idx) => {
+    const items = Object.entries(contentItems).filter(([,v])=>v.platform===key&&v.day===activeDay);
+    const card = document.createElement('div');
+    card.className = 'platform-card';
+    card.innerHTML = `<div class="pc-head"><div class="pc-name">${PLATFORMS[idx]}</div><button class="pc-add-btn" onclick="openAddContent('${key}')" ${!isAdmin?'disabled':''}>+</button></div><div class="pc-items" id="pc-${key}"></div>`;
+    el.appendChild(card);
+    const itemsEl = card.querySelector(`#pc-${key}`);
+    if (!items.length) { itemsEl.innerHTML='<div class="pc-empty">+ přidat obsah</div>'; return; }
+    items.forEach(([id,item]) => {
+      const row = document.createElement('div');
+      row.className = 'pc-item';
+      row.innerHTML = `<div class="pc-cb ${item.done?'checked':''}" onclick="toggleContentDone('${id}',${item.done})"></div><div class="pc-text ${item.done?'done':''}" style="cursor:${isAdmin?'pointer':'default'}" onclick="${isAdmin?`openEditItem('${id}','content')`:''}">${item.text}</div><div class="pc-avatars">${renderAvatars(item.assignees)}</div>${isAdmin?`<button class="pc-del" onclick="deleteContent('${id}')">×</button>`:''}`;
+      itemsEl.appendChild(row);
+    });
+  });
+}
+
+function renderChecklist() {
+  const isAdmin = currentUserData?.role==='admin';
+  const items = Object.entries(checklistItems).filter(([,v])=>v.day===activeDay);
+  const done = items.filter(([,v])=>v.done).length;
+  document.getElementById('cc-count').textContent = `${done}/${items.length}`;
+  document.getElementById('cc-add-btn').disabled = !isAdmin;
+  const el = document.getElementById('cc-tasks');
+  el.innerHTML = '';
+  if (!items.length) { el.innerHTML='<div class="empty-state">Žádné úkoly pro tento den</div>'; return; }
+  items.sort(([,a],[,b])=>(b.prio||0)-(a.prio||0));
+  items.forEach(([id,item]) => {
+    const typeTag = item.type==='weekly'?'<span class="tag tag-weekly">týdenní</span>':item.type==='match'?`<span class="tag tag-match">${item.offset!=null?(item.offset<=0?'D'+item.offset:'D+'+item.offset):'zápas'}</span>`:'';
+    const row = document.createElement('div');
+    row.className = 'cc-task';
+    row.innerHTML = `<div class="cc-cb ${item.done?'checked':''}" onclick="toggleChecklistDone('${id}',${item.done})"></div><div class="cc-body"><div class="cc-text ${item.done?'done':''}" style="cursor:${isAdmin?'pointer':'default'}" onclick="${isAdmin?`openEditItem('${id}','checklist')`:''}">${item.text}</div><div class="cc-meta">${item.time?`<span class="tag tag-time">${item.time}</span>`:''} ${item.prio?'<span class="tag tag-prio">priorita</span>':''} ${typeTag} ${renderAvatars(item.assignees)}</div></div><div class="cc-right">${isAdmin?`<button class="cc-del" onclick="deleteChecklist('${id}')">×</button>`:''}</div>`;
+    el.appendChild(row);
+  });
+}
+
+function renderAvatars(assignees) {
+  if (!assignees) return '';
+  return Object.values(assignees).map(uid => {
+    const m = Object.values(members).find(x=>x.uid===uid);
+    if (!m) return '';
+    const c = COLORS[m.color]||COLORS.blue;
+    return `<div class="avatar-xs" style="background:${c.bg};color:${c.text};">${m.initials}</div>`;
+  }).join('');
+}
+
+function renderAdminMembers() {
+  const el = document.getElementById('member-list');
+  if (!el) return;
+  const entries = Object.entries(members);
+  if (!entries.length) { el.innerHTML='<div style="font-size:13px;color:var(--text-3);font-style:italic;">Zatím žádní členové</div>'; return; }
+  el.innerHTML = '';
+  entries.forEach(([key,m]) => {
+    const c = COLORS[m.color]||COLORS.blue;
+    const row = document.createElement('div');
+    row.className = 'member-row';
+    row.innerHTML = `<div class="member-avatar" style="background:${c.bg};color:${c.text};">${m.initials}</div><div class="member-info"><div class="member-name">${m.name}</div><div class="member-email">${m.email||''}</div></div><div class="member-role ${m.role==='admin'?'role-admin':'role-user'}">${m.role==='admin'?'admin':'uživatel'}</div><button class="member-del" onclick="deleteMember('${key}')">×</button>`;
+    el.appendChild(row);
+  });
+}
+
+function renderLegend() {
+  const el = document.getElementById('legend');
+  el.innerHTML = '';
+  Object.values(members).forEach(m => {
+    const c = COLORS[m.color]||COLORS.blue;
+    el.innerHTML += `<div class="leg-item"><div class="leg-dot" style="background:${c.bg};border:1.5px solid ${c.text};"></div><span class="leg-label">${m.initials} — ${m.name}</span></div>`;
+  });
+}
+
+// TIME SORT HELPER
+function timeToMinutes(t) {
+  if (!t) return 999;
+  const map = { "ráno": 420, "dopoledne": 540, "oběd": 720, "odpoledne": 780, "večer": 1080, "před zápasem": 600, "během": 660, "po zápase": 780, "hned po": 800, "1h před zápasem": 570 };
+  if (map[t]) return map[t];
+  const m = t.match(/^(\d{1,2}):(\d{2})$/);
+  if (m) return parseInt(m[1])*60 + parseInt(m[2]);
+  return 998;
+}
+
+// MY DAY
+window.renderMyDay = () => {
+  const todayIdx = (() => { const d = new Date().getDay(); return d === 0 ? 6 : d - 1; })();
+  const todayDates = (() => { const now = new Date(); const diff = now.getDay()===0?-6:1-now.getDay(); const mon=new Date(now); mon.setDate(now.getDate()+diff); mon.setHours(0,0,0,0); return Array.from({length:7},(_,i)=>{ const d=new Date(mon); d.setDate(mon.getDate()+i); return d; }); })();
+  const today = todayDates[todayIdx];
+  const dateStr = today.getDate() + ". " + today.toLocaleDateString("cs-CZ",{month:"long"}) + " " + today.getFullYear();
+  document.getElementById("myday-sub").textContent = dateStr;
+  const uid = currentUser?.uid;
+  const el = document.getElementById("myday-list");
+  el.innerHTML = "";
+  const myItems = [];
+  Object.entries(checklistItems).filter(([,v]) => v.day===todayIdx && v.assignees && Object.values(v.assignees).includes(uid)).forEach(([id,item]) => {
+    myItems.push({ id, item, source: "úkol" });
+  });
+  Object.entries(contentItems).filter(([,v]) => v.day===todayIdx && v.assignees && Object.values(v.assignees).includes(uid)).forEach(([id,item]) => {
+    myItems.push({ id, item, source: item.platform || "content" });
+  });
+  myItems.sort((a,b) => timeToMinutes(a.item.time) - timeToMinutes(b.item.time));
+  if (!myItems.length) {
+    el.innerHTML = '<div class="empty-state">Dnes nemáš žádné přiřazené úkoly.</div>';
+    return;
+  }
+  myItems.forEach(({ id, item, source }) => {
+    const isContent = source !== "úkol";
+    const row = document.createElement("div");
+    row.className = "myday-item";
+    row.innerHTML = `<div class="myday-cb ${item.done?"checked":""}" onclick="toggleMyDayItem('${id}',${item.done},'${isContent?"content":"checklist"}')"></div><div class="myday-body"><div class="myday-text ${item.done?"done":""}">${item.text}</div><div class="myday-meta">${item.time?`<span class="myday-time">${item.time}</span>`:""}<span class="myday-source">${source}</span></div></div>`;
+    el.appendChild(row);
+  });
+};
+
+window.toggleMyDayItem = async (id, current, type) => {
+  const path = type === "content" ? `weeks/${getWeekKey()}/content/${id}` : `weeks/${getWeekKey()}/checklist/${id}`;
+  await update(ref(db, path), { done: !current });
+};
+
+window.sendMyDayEmail = async () => {
+  const btn = document.getElementById("myday-send-btn");
+  const msg = document.getElementById("myday-send-msg");
+  const uid = currentUser?.uid;
+  const email = currentUserData?.email;
+  const name = currentUserData?.name;
+  if (!email) { alert("Nemáš uložený email v profilu."); return; }
+  btn.disabled = true;
+  const myItems = [];
+  const _todayIdx = (() => { const d = new Date().getDay(); return d === 0 ? 6 : d - 1; })();
+  Object.entries(checklistItems).filter(([,v]) => v.day===_todayIdx && v.assignees && Object.values(v.assignees).includes(uid)).forEach(([,item]) => {
+    myItems.push({ text: item.text, time: item.time||"", done: item.done, source: "úkol" });
+  });
+  Object.entries(contentItems).filter(([,v]) => v.day===_todayIdx && v.assignees && Object.values(v.assignees).includes(uid)).forEach(([,item]) => {
+    myItems.push({ text: item.text, time: item.time||"", done: item.done, source: item.platform||"content" });
+  });
+  myItems.sort((a,b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+  const today = getWeekDates()[activeDay];
+  const dateStr = today.getDate() + ". " + today.toLocaleDateString("cs-CZ",{month:"long"}) + " " + today.getFullYear();
+
+  // Build HTML email body in the app — Make just passes it through
+  const itemsHtml = myItems.length === 0
+    ? '<p style="color:#999;font-size:13px;padding:12px 0;">Dnes nemáš žádné přiřazené úkoly.</p>'
+    : myItems.map(item => `
+      <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 16px;border-bottom:1px solid #f0f0f0;">
+        <div style="width:14px;height:14px;margin-top:2px;flex-shrink:0;border-radius:3px;border:2px solid ${item.done ? '#0410C3' : '#ccc'};background:${item.done ? '#0410C3' : '#fff'};"></div>
+        <div>
+          <div style="font-size:13px;color:${item.done ? '#999' : '#111'};${item.done ? 'text-decoration:line-through;' : ''}">${item.text}</div>
+          ${item.time ? `<div style="font-size:11px;color:#999;margin-top:2px;">${item.time}</div>` : ''}
+        </div>
+      </div>`).join('');
+
+  const htmlBody = `
+    <div style="font-family:'DM Sans',sans-serif;max-width:520px;margin:0 auto;padding:24px;">
+      <div style="background:#0410C3;border-radius:10px;padding:14px 20px;margin-bottom:24px;">
+        <span style="color:#FEE501;font-size:15px;font-weight:600;">FK Teplice — Program FK Teplice</span>
+      </div>
+      <p style="font-size:15px;color:#111;margin-bottom:6px;">Ahoj <strong>${name}</strong>,</p>
+      <p style="font-size:13px;color:#555;margin-bottom:20px;">tvoje úkoly na <strong>${dateStr}</strong>:</p>
+      <div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;overflow:hidden;">
+        ${itemsHtml}
+      </div>
+      <p style="font-size:11px;color:#bbb;margin-top:20px;text-align:center;">FK Teplice · Program FK Teplice</p>
+    </div>`;
+
+  const payload = { name, email, date: dateStr, htmlBody };
+  try {
+    const WEBHOOK_URL = "https://hook.eu1.make.com/9d7ouo6apcoumiqnbyiaqxiohiqblwr2";
+    await fetch(WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    msg.style.display = "block";
+    setTimeout(() => { msg.style.display="none"; btn.disabled=false; }, 3000);
+  } catch(e) {
+    alert("Chyba při odesílání. Zkontroluj webhook URL.");
+    btn.disabled = false;
+  }
+};
+</script>
+</body>
+</html>
