@@ -722,7 +722,7 @@ window.sendToCalendar = async () => {
     attendees: emails.join(","),
   };
 
-  const CALENDAR_WEBHOOK = 'https://script.google.com/macros/s/AKfycbxt_Nsk4lDCvUzb7lQ-FTqfGnWss_uFYAJ4XRJ2V04myyiKr8xgW4FwjjfHqQzbHUwg/exec';
+  const CALENDAR_WEBHOOK = 'https://script.google.com/macros/s/AKfycbykYM1PsImANLQqnz665AtpoFWHDuwd02DOUD5mm_NL1LvIGLIGlMx4clDHM2tHtU8v/exec';
   try {
     const btn = document.getElementById('btn-cal');
     btn.textContent = '⏳ Odesílám...';
@@ -1062,7 +1062,7 @@ window.sendMyDayEmail = async () => {
 
   const payload = { type: "email", name, email, date: dateStr, htmlBody };
   try {
-    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbxt_Nsk4lDCvUzb7lQ-FTqfGnWss_uFYAJ4XRJ2V04myyiKr8xgW4FwjjfHqQzbHUwg/exec";
+    const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbykYM1PsImANLQqnz665AtpoFWHDuwd02DOUD5mm_NL1LvIGLIGlMx4clDHM2tHtU8v/exec";
     await fetch(WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
     msg.style.display = "block";
     setTimeout(() => { msg.style.display="none"; btn.disabled=false; }, 3000);
