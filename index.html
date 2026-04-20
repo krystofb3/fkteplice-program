@@ -235,6 +235,10 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     <div class="auth-field"><div class="auth-label">Heslo</div><input class="auth-input" type="password" id="auth-pass" placeholder="••••••••"></div>
     <div class="auth-error" id="auth-error"></div>
     <button class="auth-btn" onclick="doLogin()">Přihlásit se</button>
+    <div style="text-align:center;margin-top:-8px;">
+      <span onclick="doResetPassword()" style="font-size:12px;color:var(--text-3);cursor:pointer;text-decoration:underline;">Zapomněl/a jsem heslo</span>
+    </div>
+    <div id="auth-reset-msg" style="font-size:12px;color:#3B6D11;background:#EAF3DE;border-radius:4px;padding:8px 10px;display:none;text-align:center;">Email pro reset hesla byl odeslán.</div>
   </div>
 </div>
 
@@ -251,6 +255,7 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
         <span id="tb-avatar-initials">?</span>
         <div class="tb-avatar-menu" id="tb-avatar-menu">
           <div class="tb-menu-item" onclick="showMyDay()">Můj den</div>
+          <div class="tb-menu-item" onclick="showProfile()">Můj profil</div>
           <div class="tb-menu-item" id="menu-admin" onclick="showAdmin()" style="display:none">Správa týmu</div>
           <div class="tb-menu-item danger" onclick="doLogout()">Odhlásit se</div>
         </div>
@@ -362,6 +367,32 @@ body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--t
     </div>
   </div>
 </div>
+
+      <div class="view" id="view-profile">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;">
+          <button onclick="showMain()" style="background:none;border:1px solid var(--border-md);border-radius:var(--r-sm);padding:5px 12px;font-size:13px;color:var(--text-2);cursor:pointer;font-family:'DM Sans',sans-serif;">← zpět</button>
+          <div style="font-size:18px;font-weight:600;color:var(--text);">Můj profil</div>
+        </div>
+        <div class="admin-section" style="max-width:420px;">
+          <div class="admin-section-title">Osobní údaje</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div><div class="modal-label" style="margin-bottom:4px;">Jméno</div><input class="modal-input" id="prof-name" placeholder="Jan Novák"></div>
+            <div><div class="modal-label" style="margin-bottom:4px;">Iniciály</div><input class="modal-input" id="prof-initials" placeholder="JN" maxlength="2"></div>
+            <div><div class="modal-label" style="margin-bottom:4px;">Barva avatara</div><select class="modal-select" id="prof-color"><option value="blue">Modrá</option><option value="green">Zelená</option><option value="pink">Růžová</option><option value="teal">Tyrkysová</option><option value="orange">Oranžová</option></select></div>
+            <button class="modal-btn primary" onclick="saveProfile()" style="align-self:flex-start;">Uložit změny</button>
+            <div id="prof-msg" style="font-size:12px;display:none;"></div>
+          </div>
+        </div>
+        <div class="admin-section" style="max-width:420px;margin-top:12px;">
+          <div class="admin-section-title">Změna hesla</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div><div class="modal-label" style="margin-bottom:4px;">Nové heslo</div><input class="modal-input" type="password" id="prof-pass1" placeholder="••••••••"></div>
+            <div><div class="modal-label" style="margin-bottom:4px;">Potvrdit heslo</div><input class="modal-input" type="password" id="prof-pass2" placeholder="••••••••"></div>
+            <button class="modal-btn primary" onclick="savePassword()" style="align-self:flex-start;">Změnit heslo</button>
+            <div id="prof-pass-msg" style="font-size:12px;display:none;"></div>
+          </div>
+        </div>
+      </div>
 <div class="modal-overlay" id="modal-content">
   <div class="modal">
     <div class="modal-title" id="modal-content-title">Přidat obsah</div>
@@ -811,8 +842,21 @@ window.showMyDay = () => {
 };
 window.showMain = () => {
   document.getElementById('view-admin').classList.remove('active');
-  document.getElementById('view-main').classList.add('active');
   document.getElementById('view-myday').classList.remove('active');
+  document.getElementById('view-profile').classList.remove('active');
+  document.getElementById('view-main').classList.add('active');
+};
+
+window.showProfile = () => {
+  document.getElementById('view-main').classList.remove('active');
+  document.getElementById('view-admin').classList.remove('active');
+  document.getElementById('view-myday').classList.remove('active');
+  document.getElementById('view-profile').classList.add('active');
+  document.getElementById('tb-avatar-menu').classList.remove('open');
+  // Pre-fill profile fields
+  document.getElementById('prof-name').value = currentUserData?.name || '';
+  document.getElementById('prof-initials').value = currentUserData?.initials || '';
+  document.getElementById('prof-color').value = currentUserData?.color || 'blue';
 };
 window.toggleAvatarMenu = () => document.getElementById('tb-avatar-menu').classList.toggle('open');
 document.addEventListener('click', e => {
@@ -1069,6 +1113,78 @@ window.sendMyDayEmail = async () => {
   } catch(e) {
     alert("Chyba při odesílání. Zkontroluj webhook URL.");
     btn.disabled = false;
+  }
+};
+
+// RESET PASSWORD
+window.doResetPassword = async () => {
+  const email = document.getElementById('auth-email').value.trim();
+  const msg = document.getElementById('auth-reset-msg');
+  const err = document.getElementById('auth-error');
+  if (!email) { err.textContent = 'Zadej email pro reset hesla.'; err.style.display='block'; return; }
+  try {
+    const { sendPasswordResetEmail } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
+    await sendPasswordResetEmail(auth, email);
+    msg.style.display = 'block';
+    err.style.display = 'none';
+  } catch(e) {
+    err.textContent = 'Chyba: ' + e.message;
+    err.style.display = 'block';
+  }
+};
+
+// SAVE PROFILE
+window.saveProfile = async () => {
+  const name = document.getElementById('prof-name').value.trim();
+  const initials = document.getElementById('prof-initials').value.trim().toUpperCase();
+  const color = document.getElementById('prof-color').value;
+  const msg = document.getElementById('prof-msg');
+  if (!name || !initials) { msg.style.cssText='display:block;color:#A32D2D;'; msg.textContent='Vyplň jméno a iniciály.'; return; }
+  try {
+    await update(ref(db, `users/${currentUser.uid}`), { name, initials, color });
+    // Update in members too
+    const membersSnap = await get(ref(db, 'members'));
+    const membersData = membersSnap.val() || {};
+    for (const [key, m] of Object.entries(membersData)) {
+      if (m.uid === currentUser.uid) {
+        await update(ref(db, `members/${key}`), { name, initials, color });
+        break;
+      }
+    }
+    currentUserData = { ...currentUserData, name, initials, color };
+    updateAvatarUI();
+    msg.style.cssText='display:block;color:var(--green);';
+    msg.textContent='Uloženo.';
+    setTimeout(() => { msg.style.display='none'; }, 2000);
+  } catch(e) {
+    msg.style.cssText='display:block;color:#A32D2D;';
+    msg.textContent='Chyba: ' + e.message;
+  }
+};
+
+// SAVE PASSWORD
+window.savePassword = async () => {
+  const pass1 = document.getElementById('prof-pass1').value;
+  const pass2 = document.getElementById('prof-pass2').value;
+  const msg = document.getElementById('prof-pass-msg');
+  if (!pass1 || pass1.length < 6) { msg.style.cssText='display:block;color:#A32D2D;'; msg.textContent='Heslo musí mít alespoň 6 znaků.'; return; }
+  if (pass1 !== pass2) { msg.style.cssText='display:block;color:#A32D2D;'; msg.textContent='Hesla se neshodují.'; return; }
+  try {
+    const { updatePassword } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js');
+    await updatePassword(currentUser, pass1);
+    msg.style.cssText='display:block;color:var(--green);';
+    msg.textContent='Heslo bylo změněno.';
+    document.getElementById('prof-pass1').value = '';
+    document.getElementById('prof-pass2').value = '';
+    setTimeout(() => { msg.style.display='none'; }, 2000);
+  } catch(e) {
+    if (e.code === 'auth/requires-recent-login') {
+      msg.style.cssText='display:block;color:#A32D2D;';
+      msg.textContent='Z bezpečnostních důvodů se prosím odhlás a přihlas znovu, pak změň heslo.';
+    } else {
+      msg.style.cssText='display:block;color:#A32D2D;';
+      msg.textContent='Chyba: ' + e.message;
+    }
   }
 };
 </script>
