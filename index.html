@@ -727,7 +727,7 @@ window.sendToCalendar = async () => {
     const btn = document.getElementById('btn-cal');
     btn.textContent = '⏳ Odesílám...';
     btn.disabled = true;
-    await fetch(CALENDAR_WEBHOOK, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) });
+    await fetch(CALENDAR_WEBHOOK, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(payload) });
     btn.textContent = '✓ Přidáno!';
     setTimeout(() => { btn.textContent = '📅 Přidat do kalendáře'; btn.disabled = false; }, 2500);
   } catch(e) {
@@ -1063,7 +1063,7 @@ window.sendMyDayEmail = async () => {
   const payload = { type: "email", name, email, date: dateStr, htmlBody };
   try {
     const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbykYM1PsImANLQqnz665AtpoFWHDuwd02DOUD5mm_NL1LvIGLIGlMx4clDHM2tHtU8v/exec";
-    await fetch(WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    await fetch(WEBHOOK_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "text/plain" }, body: JSON.stringify(payload) });
     msg.style.display = "block";
     setTimeout(() => { msg.style.display="none"; btn.disabled=false; }, 3000);
   } catch(e) {
